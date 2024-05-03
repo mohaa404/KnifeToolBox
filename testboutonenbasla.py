@@ -148,7 +148,7 @@ class KnifeToolboxApp(App):
         doc = SimpleDocTemplate(report_name, pagesize=letter)
         report_content = []
 
-        logo_img = ReportImage("img/hack01.png", width=100, height=100)  # Chemin vers votre image PNG
+        logo_img = ReportImage("img/KnifeToolBox_report.png", width=100, height=100)  # Chemin vers votre image PNG
         report_content.append(logo_img)
 
         report_content.append(Paragraph("Rapport de l'outil Knife Tool Box \n\n", self.styles['Title']))
