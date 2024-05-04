@@ -23,7 +23,7 @@ Knife Tool Box est une application Kivy développée dans le cadre d'un projet d
 1. Clonez le dépôt :
 
     ```
-    git clone https://github.com/votre_utilisateur/KnifeToolBox.git
+    git clone https://github.com/mohaa404/KnifeToolBox.git
     ```
 
 2. Installez les dépendances :

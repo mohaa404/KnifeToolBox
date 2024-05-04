@@ -22,7 +22,7 @@ class KnifeToolboxApp(App):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.ssh_results = ""
-        self.vulnerability_results = ""
+        self.vulnerability_results = []
         self.styles = getSampleStyleSheet()
         self.title_label = None
         self.instructions_label = None
@@ -66,7 +66,7 @@ class KnifeToolboxApp(App):
         action_buttons = [
             ("Découvrir le réseau", self.discover_network),
             ("Scanner les ports", self.scan_ports),
-            ("Détecter les vulnérabilités", self.detect_vulnerabilities),
+            ("Détecter les vulnabilités", self.detect_vulnerabilities),
             ("Générer un rapport", self.generate_report)
         ]
         for text, action in action_buttons:
@@ -152,15 +152,15 @@ class KnifeToolboxApp(App):
             unique_cves = set(cve_matches)  
             num_cves = len(unique_cves)   
             self.num_detected_vulnerabilities += num_cves
-            self.vulnerability_results = "\n".join(unique_cves)  
+            self.vulnerability_results = list(unique_cves)
         else:
-            self.vulnerability_results = f"Erreur lors de la détection de vulnérabilités : {result.stderr}"
+            self.vulnerability_results = [f"Erreur lors de la détection de vulnérabilités : {result.stderr}"]
 
         popup_width = Window.width * 0.8
         popup_height = Window.height * 0.8
 
         scroll_view = ScrollView()
-        label = Label(text=self.vulnerability_results, size_hint=(None, None), size=(popup_width, popup_height))
+        label = Label(text='\n'.join(self.vulnerability_results), size_hint=(None, None), size=(popup_width, popup_height))
         label.bind(texture_size=label.setter('size'))
         scroll_view.add_widget(label)
 
@@ -187,7 +187,10 @@ class KnifeToolboxApp(App):
         report_content.append(Paragraph(ssh_attempts_section, self.styles['Normal']))
         report_content.append(Spacer(1, 12))
 
-        vulnerabilities_section = "<b>Résultats de la détection de vulnérabilités</b><br/><br/>" + self.vulnerability_results
+        vulnerabilities_section = "<b>Résultats de la détection de vulnérabilités</b><br/><br/>"
+        for cve in self.vulnerability_results:
+            cve_link = f"<a href='https://cve.mitre.org/cgi-bin/cvename.cgi?name={cve}'>{cve}</a>"
+            vulnerabilities_section += f"{cve_link}<br/>"
         report_content.append(Paragraph(vulnerabilities_section, self.styles['Normal']))
         report_content.append(Spacer(1, 12))
 
@@ -202,7 +205,9 @@ class KnifeToolboxApp(App):
         report_content.append(Paragraph(open_ports_section, self.styles['Normal']))
         report_content.append(Spacer(1, 12))
 
-        discovered_hosts_section = "<b>Résultats de la découverte de réseau</b><br/><br/>" + ', '.join(self.nm.all_hosts()) if self.nm.all_hosts() else "Aucun hôte découvert."
+        discovered_hosts_section = "<b>Résultats de la découverte de réseau</b><br/><br/>"
+        for host in self.nm.all_hosts():
+            discovered_hosts_section += f'Hôte découvert : {host}<br/>'
         report_content.append(Paragraph(discovered_hosts_section, self.styles['Normal']))
         report_content.append(Spacer(1, 12))
 
