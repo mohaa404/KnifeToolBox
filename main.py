@@ -1,3 +1,9 @@
+import os
+import subprocess
+import paramiko
+import nmap
+import re
+import matplotlib.pyplot as plt
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.textinput import TextInput
@@ -7,15 +13,10 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.popup import Popup
 from kivy.uix.image import AsyncImage
 from kivy.animation import Animation
-from kivy.clock import Clock
-import subprocess
-import nmap
-import matplotlib.pyplot as plt
+from kivy.core.window import Window
 from reportlab.lib.pagesizes import letter
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as ReportImage
 from reportlab.lib.styles import getSampleStyleSheet
-import paramiko
-from kivy.core.window import Window
 
 class KnifeToolboxApp(App):
     def __init__(self, **kwargs):
@@ -25,6 +26,11 @@ class KnifeToolboxApp(App):
         self.title_label = None
         self.instructions_label = None
         self.host_ip = None
+        self.nm = nmap.PortScanner()
+        self.num_discovered_hosts = 0
+        self.num_detected_vulnerabilities = 0
+        self.num_open_ports = 0
+        self.open_ports = []
 
     def build(self):
         layout = BoxLayout(orientation='vertical')
@@ -46,6 +52,9 @@ class KnifeToolboxApp(App):
 
         self.ip_entry = TextInput(size_hint=(None, None), size=(200, 30), pos_hint={'center_x': 0.5}, hint_text="@ IP ")
         layout.add_widget(self.ip_entry)
+
+        report_name_label = Label(text="Nom du rapport (Facultatif) :", color=(0.3, 0.3, 0.3, 1), size_hint_y=None, height='60dp')
+        layout.add_widget(report_name_label)
 
         self.report_name_entry = TextInput(size_hint=(None, None), size=(200, 30), pos_hint={'center_x': 0.5}, hint_text="Nom du rapport (facultatif)")
         layout.add_widget(self.report_name_entry)
@@ -87,13 +96,13 @@ class KnifeToolboxApp(App):
     def discover_network(self, instance):
         ip_address = self.ip_entry.text
         self.host_ip = ip_address
-        nm = nmap.PortScanner()
-        nm.scan(hosts=ip_address, arguments='-sn')
+        self.nm.scan(hosts=ip_address, arguments='-sn')
 
-        hosts = [host for host in nm.all_hosts()]
+        hosts = [host for host in self.nm.all_hosts()]
         result_text = "Découverte de réseau :\n" + ', '.join(hosts) if hosts else "Aucun hôte découvert."
 
         self.report_results += result_text + "\n"
+        self.num_discovered_hosts += len(hosts)
 
         popup = Popup(title="Résultats de la découverte de réseau", content=Label(text=result_text), size_hint=(None, None), size=(400, 300))
         popup.open()
@@ -101,57 +110,77 @@ class KnifeToolboxApp(App):
     def scan_ports(self, instance):
         ip_address = self.ip_entry.text
         self.host_ip = ip_address
-        nm = nmap.PortScanner()
-        nm.scan(hosts=ip_address, arguments='-p 22,80,443')
+        self.nm.scan(hosts=ip_address, arguments='-T4 -F')
 
-        result_text = "Scan de ports :\n"
+        open_ports_data = []  # Stocker les données des ports ouverts
 
-        for host in nm.all_hosts():
-            result_text += f'Host : {host}\n'
-            for proto in nm[host].all_protocols():
-                result_text += f'Protocol : {proto}\n'
-                ports = nm[host][proto].keys()
+        for host in self.nm.all_hosts():
+            for proto in self.nm[host].all_protocols():
+                ports = self.nm[host][proto].keys()
                 for port in ports:
-                    result_text += f'Port : {port} State : {nm[host][proto][port]["state"]}\n'
+                    if self.nm[host][proto][port]["state"] == "open":  # Filtrer les ports ouverts
+                        service_name = self.nm[host][proto][port]["name"] if "name" in self.nm[host][proto][port] else "Unknown"
+                        open_ports_data.append((port, service_name))
+                        self.open_ports.append((host, port, service_name))
+
+        result_text = "Ports ouverts :\n" + '\n'.join(f'Port: {port}, Service: {service_name}' for port, service_name in open_ports_data)  # Construire le texte des résultats
 
         self.report_results += result_text + "\n"
 
-        popup = Popup(title="Résultats du scan de ports", content=Label(text=result_text), size_hint=(None, None), size=(500, 400))
+        popup_text = "Ports ouvert : \n"
+        for host, port, service_name in self.open_ports:
+            popup_text += f"  Host: {host}, \t Port: {port}, Service: {service_name}\n"
+
+        screen_width, screen_height = Window.size
+        popup_width = screen_width * 0.8
+        popup_height = screen_height * 0.8
+        scroll_view = ScrollView()
+        label = Label(text=popup_text, size_hint=(None, None), size=(popup_width, popup_height))
+        label.bind(size=label.setter('size'))
+        scroll_view.add_widget(label)
+
+       
+        popup = Popup(title="Résultats du scan de ports", content=scroll_view, size_hint=(None, None), size=(popup_width, popup_height))
         popup.open()
 
     def detect_vulnerabilities(self, instance):
         ip_address = self.ip_entry.text
 
-        # Exécuter la commande nmap pour détecter les vulnérabilités
         command = ["nmap", "-sV", "--script", "vulners", ip_address]
         result = subprocess.run(command, capture_output=True, text=True)
 
         if result.returncode == 0:
             result_text = result.stdout
-            self.report_results += result_text + "\n"  # Ajouter les résultats à self.report_results
+            self.report_results += result_text + "\n"
+            cve_matches = re.findall(r'(CVE-\d{4}-\d{4,7})', result_text)
+            unique_cves = set(cve_matches)  # Utilisation d'un ensemble pour les CVE uniques
+            num_cves = len(unique_cves)   # Diviser par 2 pour éviter les doublons
+            self.num_detected_vulnerabilities += num_cves
         else:
             result_text = f"Erreur lors de la détection de vulnérabilités : {result.stderr}"
 
-        # Obtenir la taille de l'écran
+        result_text = "\n".join(unique_cves)  # Afficher uniquement les CVE détectées
+
         screen_width, screen_height = Window.size
 
-        # Définir la taille de la popup en fonction de la taille de l'écran
         popup_width = screen_width * 0.8
         popup_height = screen_height * 0.8
 
-        # Créer un widget ScrollView pour afficher le texte résultant
         scroll_view = ScrollView()
         label = Label(text=result_text, size_hint=(None, None), size=(popup_width, popup_height))
         label.bind(texture_size=label.setter('size'))
         scroll_view.add_widget(label)
 
-        # Créer une popup avec le widget ScrollView
         popup = Popup(title="Résultats de la détection de vulnérabilités", content=scroll_view, size_hint=(None, None), size=(popup_width, popup_height))
         popup.open()
 
     def generate_report(self, instance):
-        categories = ['Vulnérabilités', 'Ports ouverts', 'Hosts découverts']
-        data = [self.report_results.count('Vulnérabilités'), self.report_results.count('Ports ouverts'), self.report_results.count('Hosts découverts')]
+        report_folder = "report"
+        if not os.path.exists(report_folder):
+            os.makedirs(report_folder)
+
+        categories = ['Hosts découverts', 'Vulnérabilités détectées', 'Ports ouverts']
+        data = [self.num_discovered_hosts, self.num_detected_vulnerabilities, len(self.open_ports)]
 
         plt.figure(figsize=(6, 4))
         plt.bar(categories, data)
@@ -159,30 +188,46 @@ class KnifeToolboxApp(App):
         plt.ylabel('Nombre')
         plt.title('Résumé des résultats')
 
-        plt_file = "summary_plot.png"
+        plt_file = os.path.join(report_folder, "summary_plot.png")
         plt.savefig(plt_file)
 
         report_name = self.report_name_entry.text.strip() + "_Report.pdf" if self.report_name_entry.text.strip() else "KnifeReport.pdf"
-        doc = SimpleDocTemplate(report_name, pagesize=letter)
+        report_path = os.path.join(report_folder, report_name)
+
+        doc = SimpleDocTemplate(report_path, pagesize=letter)
         report_content = []
 
-        logo_img = ReportImage("img/KnifeToolBox_report.png", width=100, height=100)  # Chemin vers votre image PNG
+        logo_img = ReportImage("img/KnifeToolBox_report.png", width=100, height=100)
         report_content.append(logo_img)
-
-        report_content.append(Paragraph("Rapport de l'outil Knife Tool Box \n\n", self.styles['Title']))
-        
+        report_content.append(Paragraph("Rapport de l'outil Knife Tool Box\n\n", self.styles['Title']))
         report_content.append(Paragraph(f"Hôte testé : {self.host_ip}\n\n", self.styles['Normal']))
 
-        report_content.append(Paragraph(self.report_results, self.styles['Normal']))
-
+        vulnerabilities_section = "Résultats de la détection de vulnérabilités\n\n" + self.report_results
+        report_content.append(Paragraph(vulnerabilities_section, self.styles['Normal']))
         report_content.append(Spacer(1, 12))
+
+        open_ports_section = "Résultats du scan de ports :\n\n"
+        for host in self.nm.all_hosts():
+            open_ports_section += f'Host : {host}\n'
+            for proto in self.nm[host].all_protocols():
+                open_ports_section += f'Protocol : {proto}\n'
+                ports = self.nm[host][proto].keys()
+                for port in ports:
+                    open_ports_section += f'Port : {port} State : {self.nm[host][proto][port]["state"]}\n'
+        report_content.append(Paragraph(open_ports_section, self.styles['Normal']))
+        report_content.append(Spacer(1, 12))
+
+        discovered_hosts_section = "Résultats de la découverte de réseau :\n\n" + ', '.join(self.nm.all_hosts()) if self.nm.all_hosts() else "Aucun hôte découvert."
+        report_content.append(Paragraph(discovered_hosts_section, self.styles['Normal']))
+        report_content.append(Spacer(1, 12))
+
         report_content.append(ReportImage(plt_file, width=400, height=200))
 
         doc.build(report_content)
 
         self.result_text.clear_widgets()
 
-        self.result_text.add_widget(Label(text=f"Rapport généré : {report_name}"))
+        self.result_text.add_widget(Label(text=f"Rapport généré : {report_path}"))
 
     def ssh_connect(self, instance):
         ip_address = self.ip_entry.text
@@ -203,7 +248,6 @@ class KnifeToolboxApp(App):
                 except paramiko.AuthenticationException:
                     login_attempts.append(f"Connexion NOK {username}/{password}")
 
-        # Ajouter les résultats des connexions SSH au rapport
         self.report_results += "\n".join(login_attempts) + "\n"
 
         message = "\n".join(login_attempts)
