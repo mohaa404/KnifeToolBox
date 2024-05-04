@@ -8,18 +8,15 @@ from kivy.uix.popup import Popup
 from kivy.uix.image import AsyncImage
 from kivy.animation import Animation
 from kivy.clock import Clock
+import subprocess
 import nmap
-import matplotlib.pyplot as plt
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image as ReportImage
-from reportlab.lib.styles import getSampleStyleSheet
-import paramiko
+from kivy.core.window import Window
 
 class KnifeToolboxApp(App):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.report_results = ""
-        self.styles = getSampleStyleSheet()
+        self.styles = None
         self.title_label = None
         self.instructions_label = None
         self.host_ip = None
@@ -119,78 +116,44 @@ class KnifeToolboxApp(App):
 
     def detect_vulnerabilities(self, instance):
         ip_address = self.ip_entry.text
-        self.host_ip = ip_address
-        nm = nmap.PortScanner()
-        nm.scan(hosts=ip_address, arguments='--script vulners')
 
-        vulnerabilities = nm[ip_address]['tcp'].get('script', {}).get('vulners', None)
-        result_text = "Vulnérabilités détectées :\n" + vulnerabilities if vulnerabilities else "Aucune vulnérabilité détectée."
+        # Exécuter la commande nmap pour détecter les vulnérabilités
+        command = ["nmap", "-sV", "--script", "vulners", ip_address]
+        result = subprocess.run(command, capture_output=True, text=True)
 
-        self.report_results += result_text + "\n"
+        if result.returncode == 0:
+            result_text = result.stdout
+            # Filtrer les résultats à partir de la ligne "PORT STATE SERVICE VERSION"
+            start_index = result_text.find("PORT STATE SERVICE VERSION")
+            if start_index != -1:
+                result_text = result_text[start_index:]
+        else:
+            result_text = f"Erreur lors de la détection de vulnérabilités : {result.stderr}"
 
-        popup = Popup(title="Résultats de la détection de vulnérabilités", content=Label(text=result_text), size_hint=(None, None), size=(400, 300))
+        # Obtenir la taille de l'écran
+        screen_width, screen_height = Window.size
+
+        # Définir la taille de la popup en fonction de la taille de l'écran
+        popup_width = screen_width * 0.8
+        popup_height = screen_height * 0.8
+
+        # Créer un widget ScrollView pour afficher le texte résultant
+        scroll_view = ScrollView()
+        label = Label(text=result_text, size_hint=(None, None), size=(popup_width, popup_height))
+        label.bind(texture_size=label.setter('size'))
+        scroll_view.add_widget(label)
+
+        # Créer une popup avec le widget ScrollView
+        popup = Popup(title="Résultats de la détection de vulnérabilités", content=scroll_view, size_hint=(None, None), size=(popup_width, popup_height))
         popup.open()
 
     def generate_report(self, instance):
-        categories = ['Vulnérabilités', 'Ports ouverts', 'Hosts découverts']
-        data = [self.report_results.count('Vulnérabilités'), self.report_results.count('Ports ouverts'), self.report_results.count('Hosts découverts')]
-
-        plt.figure(figsize=(6, 4))
-        plt.bar(categories, data)
-        plt.xlabel('Catégories')
-        plt.ylabel('Nombre')
-        plt.title('Résumé des résultats')
-
-        plt_file = "summary_plot.png"
-        plt.savefig(plt_file)
-
-        report_name = self.report_name_entry.text.strip() + "_Report.pdf" if self.report_name_entry.text.strip() else "KnifeReport.pdf"
-        doc = SimpleDocTemplate(report_name, pagesize=letter)
-        report_content = []
-
-        logo_img = ReportImage("img/KnifeToolBox_report.png", width=100, height=100)  # Chemin vers votre image PNG
-        report_content.append(logo_img)
-
-        report_content.append(Paragraph("Rapport de l'outil Knife Tool Box \n\n", self.styles['Title']))
-        
-        report_content.append(Paragraph(f"Hôte testé : {self.host_ip}\n\n", self.styles['Normal']))
-
-        report_content.append(Paragraph(self.report_results, self.styles['Normal']))
-
-        report_content.append(Spacer(1, 12))
-        report_content.append(ReportImage(plt_file, width=400, height=200))
-
-        doc.build(report_content)
-
-        self.result_text.clear_widgets()
-
-        self.result_text.add_widget(Label(text=f"Rapport généré : {report_name}"))
+        # Votre code pour générer le rapport
+        pass
 
     def ssh_connect(self, instance):
-        ip_address = self.ip_entry.text
-
-        usernames = ["admin", "mohaa", "root"]
-        passwords = ["switch", "password"]
-
-        login_attempts = []
-
-        for username in usernames:
-            for password in passwords:
-                ssh = paramiko.SSHClient()
-                ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                try:
-                    ssh.connect(ip_address, username=username, password=password)
-                    ssh.close()
-                    login_attempts.append(f"Connexion OK {username}/{password}")
-                except paramiko.AuthenticationException:
-                    login_attempts.append(f"Connexion NOK {username}/{password}")
-
-        # Ajouter les résultats des connexions SSH au rapport
-        self.report_results += "\n".join(login_attempts) + "\n"
-
-        message = "\n".join(login_attempts)
-        popup = Popup(title='Résultats des tentatives de connexion SSH', content=Label(text=message), size_hint=(None, None), size=(400, 300))
-        popup.open()
+        # Votre code pour la tentative de connexion SSH
+        pass
 
 if __name__ == "__main__":
     KnifeToolboxApp().run()
