@@ -21,7 +21,8 @@ from reportlab.lib.styles import getSampleStyleSheet
 class KnifeToolboxApp(App):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.report_results = ""
+        self.ssh_results = ""
+        self.vulnerability_results = ""
         self.styles = getSampleStyleSheet()
         self.title_label = None
         self.instructions_label = None
@@ -101,7 +102,6 @@ class KnifeToolboxApp(App):
         hosts = [host for host in self.nm.all_hosts()]
         result_text = "Découverte de réseau :\n" + ', '.join(hosts) if hosts else "Aucun hôte découvert."
 
-        self.report_results += result_text + "\n"
         self.num_discovered_hosts += len(hosts)
 
         popup = Popup(title="Résultats de la découverte de réseau", content=Label(text=result_text), size_hint=(None, None), size=(400, 300))
@@ -112,20 +112,18 @@ class KnifeToolboxApp(App):
         self.host_ip = ip_address
         self.nm.scan(hosts=ip_address, arguments='-T4 -F')
 
-        open_ports_data = []  # Stocker les données des ports ouverts
+        open_ports_data = []  
 
         for host in self.nm.all_hosts():
             for proto in self.nm[host].all_protocols():
                 ports = self.nm[host][proto].keys()
                 for port in ports:
-                    if self.nm[host][proto][port]["state"] == "open":  # Filtrer les ports ouverts
+                    if self.nm[host][proto][port]["state"] == "open":  
                         service_name = self.nm[host][proto][port]["name"] if "name" in self.nm[host][proto][port] else "Unknown"
                         open_ports_data.append((port, service_name))
                         self.open_ports.append((host, port, service_name))
 
-        result_text = "Ports ouverts :\n" + '\n'.join(f'Port: {port}, Service: {service_name}' for port, service_name in open_ports_data)  # Construire le texte des résultats
-
-        self.report_results += result_text + "\n"
+        result_text = "Ports ouverts :\n" + '\n'.join(f'Port: {port}, Service: {service_name}' for port, service_name in open_ports_data)  
 
         popup_text = "Ports ouvert : \n"
         for host, port, service_name in self.open_ports:
@@ -139,7 +137,6 @@ class KnifeToolboxApp(App):
         label.bind(size=label.setter('size'))
         scroll_view.add_widget(label)
 
-       
         popup = Popup(title="Résultats du scan de ports", content=scroll_view, size_hint=(None, None), size=(popup_width, popup_height))
         popup.open()
 
@@ -151,23 +148,19 @@ class KnifeToolboxApp(App):
 
         if result.returncode == 0:
             result_text = result.stdout
-            self.report_results += result_text + "\n"
             cve_matches = re.findall(r'(CVE-\d{4}-\d{4,7})', result_text)
-            unique_cves = set(cve_matches)  # Utilisation d'un ensemble pour les CVE uniques
-            num_cves = len(unique_cves)   # Diviser par 2 pour éviter les doublons
+            unique_cves = set(cve_matches)  
+            num_cves = len(unique_cves)   
             self.num_detected_vulnerabilities += num_cves
+            self.vulnerability_results = "\n".join(unique_cves)  
         else:
-            result_text = f"Erreur lors de la détection de vulnérabilités : {result.stderr}"
+            self.vulnerability_results = f"Erreur lors de la détection de vulnérabilités : {result.stderr}"
 
-        result_text = "\n".join(unique_cves)  # Afficher uniquement les CVE détectées
-
-        screen_width, screen_height = Window.size
-
-        popup_width = screen_width * 0.8
-        popup_height = screen_height * 0.8
+        popup_width = Window.width * 0.8
+        popup_height = Window.height * 0.8
 
         scroll_view = ScrollView()
-        label = Label(text=result_text, size_hint=(None, None), size=(popup_width, popup_height))
+        label = Label(text=self.vulnerability_results, size_hint=(None, None), size=(popup_width, popup_height))
         label.bind(texture_size=label.setter('size'))
         scroll_view.add_widget(label)
 
@@ -178,18 +171,6 @@ class KnifeToolboxApp(App):
         report_folder = "report"
         if not os.path.exists(report_folder):
             os.makedirs(report_folder)
-
-        categories = ['Hosts découverts', 'Vulnérabilités détectées', 'Ports ouverts']
-        data = [self.num_discovered_hosts, self.num_detected_vulnerabilities, len(self.open_ports)]
-
-        plt.figure(figsize=(6, 4))
-        plt.bar(categories, data)
-        plt.xlabel('Catégories')
-        plt.ylabel('Nombre')
-        plt.title('Résumé des résultats')
-
-        plt_file = os.path.join(report_folder, "summary_plot.png")
-        plt.savefig(plt_file)
 
         report_name = self.report_name_entry.text.strip() + "_Report.pdf" if self.report_name_entry.text.strip() else "KnifeReport.pdf"
         report_path = os.path.join(report_folder, report_name)
@@ -202,25 +183,39 @@ class KnifeToolboxApp(App):
         report_content.append(Paragraph("Rapport de l'outil Knife Tool Box\n\n", self.styles['Title']))
         report_content.append(Paragraph(f"Hôte testé : {self.host_ip}\n\n", self.styles['Normal']))
 
-        vulnerabilities_section = "Résultats de la détection de vulnérabilités\n\n" + self.report_results
+        ssh_attempts_section = "<b>Résultats des tentatives de connexion SSH</b><br/><br/>" + self.ssh_results
+        report_content.append(Paragraph(ssh_attempts_section, self.styles['Normal']))
+        report_content.append(Spacer(1, 12))
+
+        vulnerabilities_section = "<b>Résultats de la détection de vulnérabilités</b><br/><br/>" + self.vulnerability_results
         report_content.append(Paragraph(vulnerabilities_section, self.styles['Normal']))
         report_content.append(Spacer(1, 12))
 
-        open_ports_section = "Résultats du scan de ports :\n\n"
+        open_ports_section = "<b>Résultats du scan de ports</b><br/><br/>"
         for host in self.nm.all_hosts():
-            open_ports_section += f'Host : {host}\n'
+            open_ports_section += f'Host : {host}<br/>'
             for proto in self.nm[host].all_protocols():
-                open_ports_section += f'Protocol : {proto}\n'
+                open_ports_section += f'Protocol : {proto}<br/>'
                 ports = self.nm[host][proto].keys()
                 for port in ports:
-                    open_ports_section += f'Port : {port} State : {self.nm[host][proto][port]["state"]}\n'
+                    open_ports_section += f'Port : {port} State : {self.nm[host][proto][port]["state"]}<br/>'
         report_content.append(Paragraph(open_ports_section, self.styles['Normal']))
         report_content.append(Spacer(1, 12))
 
-        discovered_hosts_section = "Résultats de la découverte de réseau :\n\n" + ', '.join(self.nm.all_hosts()) if self.nm.all_hosts() else "Aucun hôte découvert."
+        discovered_hosts_section = "<b>Résultats de la découverte de réseau</b><br/><br/>" + ', '.join(self.nm.all_hosts()) if self.nm.all_hosts() else "Aucun hôte découvert."
         report_content.append(Paragraph(discovered_hosts_section, self.styles['Normal']))
         report_content.append(Spacer(1, 12))
 
+        categories = ['Hosts découverts', 'Vulnérabilités détectées', 'Ports ouverts']
+        data = [self.num_discovered_hosts, self.num_detected_vulnerabilities, len(self.open_ports)]
+
+        plt.figure(figsize=(6, 4))
+        plt.bar(categories, data)
+        plt.xlabel('Catégories')
+        plt.ylabel('Nombre')
+        plt.title('Résumé des résultats')
+        plt_file = os.path.join(report_folder, "summary_plot.png")
+        plt.savefig(plt_file)
         report_content.append(ReportImage(plt_file, width=400, height=200))
 
         doc.build(report_content)
@@ -248,7 +243,7 @@ class KnifeToolboxApp(App):
                 except paramiko.AuthenticationException:
                     login_attempts.append(f"Connexion NOK {username}/{password}")
 
-        self.report_results += "\n".join(login_attempts) + "\n"
+        self.ssh_results = "\n".join(login_attempts) + "\n"
 
         message = "\n".join(login_attempts)
         popup = Popup(title='Résultats des tentatives de connexion SSH', content=Label(text=message), size_hint=(None, None), size=(400, 300))
