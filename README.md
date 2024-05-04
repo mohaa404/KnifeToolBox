@@ -48,5 +48,5 @@ Knife Tool Box est une application Kivy développée dans le cadre d'un projet d
 
 ## ✍️ Auteur
 
-Développé par [Votre Nom](https://github.com/votre_utilisateur).
+Développé par [Mohamed JEDDI M1 CYB B](https://github.com/mohaa404).
 
