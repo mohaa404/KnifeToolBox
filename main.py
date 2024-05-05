@@ -32,6 +32,7 @@ class KnifeToolboxApp(App):
         self.num_detected_vulnerabilities = 0
         self.num_open_ports = 0
         self.open_ports = []
+        self.discovered_hosts = []
 
     def build(self):
         layout = BoxLayout(orientation='vertical')
@@ -103,6 +104,7 @@ class KnifeToolboxApp(App):
         result_text = "Découverte de réseau :\n" + ', '.join(hosts) if hosts else "Aucun hôte découvert."
 
         self.num_discovered_hosts += len(hosts)
+        self.discovered_hosts = hosts
 
         popup = Popup(title="Résultats de la découverte de réseau", content=Label(text=result_text), size_hint=(None, None), size=(400, 300))
         popup.open()
@@ -206,7 +208,7 @@ class KnifeToolboxApp(App):
         report_content.append(Spacer(1, 12))
 
         discovered_hosts_section = "<b>Résultats de la découverte de réseau</b><br/><br/>"
-        for host in self.nm.all_hosts():
+        for host in self.discovered_hosts:
             discovered_hosts_section += f'Hôte découvert : {host}<br/>'
         report_content.append(Paragraph(discovered_hosts_section, self.styles['Normal']))
         report_content.append(Spacer(1, 12))
