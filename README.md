@@ -48,10 +48,8 @@ Knife Tool Box est une application Kivy développée dans le cadre d'un projet d
 
 ## 📷 Aperçus 
 
-![Test](screens/KnifeToolBox1.png "App")
-
-Assurez-vous d'ajuster les chemins des captures d'écran (`screens/KnifeToolBox1.png`, `screens/Report.png`) en fonction de votre organisation de fichiers.
-
+![app](screens/KnifeToolBox1.png "App")
+![report](screens/Report.png "Report")
 
 ## ✍️ Auteur
 
