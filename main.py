@@ -259,7 +259,7 @@ class KnifeToolboxApp(App):
     def ssh_connect(self, instance):
         ip_address = self.ip_entry.text
 
-        usernames = ["admin", "mohaa", "root","msfadmin"]
+        usernames = ["admin", "mohaa","msfadmin"]
         passwords = ["msfadmin", "password"]
 
         login_attempts = []
