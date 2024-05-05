@@ -46,6 +46,12 @@ Knife Tool Box est une application Kivy développée dans le cadre d'un projet d
 3. Utilisez les boutons pour effectuer les différentes opérations : découvrir le réseau, scanner les ports, détecter les vulnérabilités ou générer un rapport.
 4. Les résultats seront affichés dans l'application et un rapport PDF sera généré.
 
+## 📷 Aperçus 
+
+
+Assurez-vous d'ajuster les chemins des captures d'écran (`ScreenShots/KnifeToolBox1.png`, `ScreenShots/Report.png`) en fonction de votre organisation de fichiers.
+
+
 ## ✍️ Auteur
 
 Développé par [Mohamed JEDDI M1 CYB B](https://github.com/mohaa404).

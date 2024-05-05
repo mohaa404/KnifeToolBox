@@ -1,5 +1,5 @@
-kivy==2.0.0
-nmap
+kivy
+paramiko
+python-nmap
 matplotlib
 reportlab
-paramiko
