@@ -221,7 +221,7 @@ class KnifeToolboxApp(App):
         plt.xlabel('Catégories')
         plt.ylabel('Nombre')
         plt.title('Résumé des résultats')
-        plt_file = os.path.join(report_folder, "summary_plot.png")
+        plt_file = os.path.join(report_folder, "result.png")
         plt.savefig(plt_file)
         report_content.append(ReportImage(plt_file, width=400, height=200))
 
