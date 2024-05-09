@@ -8,7 +8,7 @@ Knife Tool Box est une application Kivy développée dans le cadre d'un projet d
 - Scan de ports : Permet de scanner les ports ouverts sur une adresse IP spécifique. `(ex 192.168.88.132)`
 - Détection de vulnérabilités : Utilise nmap pour détecter les vulnérabilités sur une adresse IP. `(ex 192.168.88.132)`
 - Tentative de connexion SSH: Tente d'initier une connexion SSH par password guessing (login/password par défaut)
-- Génération de rapport : Génère un rapport PDF contenant les résultats des opérations précédentes. Le rapport fournis un graph permettant la visualisation des résultats. `Tips : Les vulnérabilités détectés renvoie via un clic vers une page WEB du CVE.`
+- Génération de rapport : Génère un rapport PDF contenant les résultats des opérations précédentes. Le rapport fournis un graph permettant la visualisation des résultats. `Tips : Les vulnérabilitées détectés renvoie via un clic vers une page WEB du CVE.`
 
 ## 🔧 Prérequis
 
