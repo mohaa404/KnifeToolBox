@@ -4,11 +4,11 @@ Knife Tool Box est une application Kivy développée dans le cadre d'un projet d
 
 ## 🚀 Fonctionnalités
 
-- Découverte de réseau : Permet de découvrir les hôtes actifs dans un réseau spécifié en scannant un réseau (ex. 192.168.88.0/24).
-- Scan de ports : Permet de scanner les ports ouverts sur une adresse IP spécifique. (ex. 192.168.88.132)
-- Détection de vulnérabilités : Utilise nmap pour détecter les vulnérabilités sur une adresse IP. (ex. 192.168.88.132)
-- Tentative de connexion SSH : Tente d'initier une connexion SSH par password guessing (login/password par défaut).
-- Génération de rapport : Génère un rapport PDF contenant les résultats des opérations précédentes. Le rapport fournit un graphique permettant la visualisation des résultats. (Tips : Les vulnérabilités détectées renvoient via un clic vers une page WEB du CVE.)
+- Découverte de réseau : Permet de découvrir les hôtes actifs dans un réseau spécifié en scannant un réseau `(ex 192.168.88.0/24)`
+- Scan de ports : Permet de scanner les ports ouverts sur une adresse IP spécifique. `(ex 192.168.88.132)`
+- Détection de vulnérabilités : Utilise nmap pour détecter les vulnérabilités sur une adresse IP. `(ex 192.168.88.132)`
+- Tentative de connexion SSH: Tente d'initier une connexion SSH par password guessing (login/password par défaut)
+- Génération de rapport : Génère un rapport PDF contenant les résultats des opérations précédentes. Le rapport fournis un graph permettant la visualisation des résultats. `Tips : Les vulnérabilitées détectés renvoie via un clic vers une page WEB du CVE.`
 
 ## 🔧 Prérequis
 
@@ -19,7 +19,7 @@ Knife Tool Box est une application Kivy développée dans le cadre d'un projet d
 - reportlab
 - paramiko
 
-## 🛠️ Installation (EN ADMINISTRATION !!)
+## 🛠️ Installation (EN ADMIN !!)
 
 1. Clonez le dépôt :
 
@@ -45,7 +45,7 @@ Knife Tool Box est une application Kivy développée dans le cadre d'un projet d
 1. Lancez l'application en exécutant `python main.py`.
 2. Saisissez l'adresse IP que vous souhaitez analyser.
 3. Utilisez les boutons pour effectuer les différentes opérations : découvrir le réseau, scanner les ports, détecter les vulnérabilités, initier une connexion SSH ou générer un rapport.
-4. Les résultats seront affichés dans l'application et un rapport PDF sera généré dans le répertoire "Report".
+4. Les résultats seront affichés dans l'application et un rapport PDF sera généré dans le répertoire "Report"
 
 ## 📷 Aperçus 
 
@@ -54,4 +54,4 @@ Knife Tool Box est une application Kivy développée dans le cadre d'un projet d
 
 ## ✍️ Auteur
 
-Développé par [Mohamed JEDDI M1 CYBER B](https://github.com/mohaa404).
+Développé par [Mohamed JEDDI M1 CYB B](https://github.com/mohaa404).
