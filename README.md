@@ -52,6 +52,16 @@ Knife Tool Box est une application Kivy développée dans le cadre d'un projet d
 ![app](screens/KnifeToolBox1.png "App")
 ![report](screens/Report.png "Report")
 
+## 📄 Licence
+
+Ce projet est sous licence MIT, sauf indication contraire pour les dépendances tierces :
+
+- Kivy - Licence MIT
+- nmap - Licence GNU GPL
+- matplotlib - Licence BSD
+- reportlab - Licence BSD
+- paramiko - Licence LGPL (version 2.1 ou ultérieure)
+
 ## ✍️ Auteur
 
 Développé par [Mohamed JEDDI M1 CYB B](https://github.com/mohaa404).
