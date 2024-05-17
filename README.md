@@ -43,7 +43,7 @@ Knife Tool Box est une application Kivy développée dans le cadre d'un projet d
 ## 📋 Utilisation
 
 1. Lancez l'application en exécutant `python main.py`.
-2. Saisissez l'adresse IP que vous souhaitez analyser.
+2. Saisissez l'adresse IP ou le réseau que vous souhaitez analyser.
 3. Utilisez les boutons pour effectuer les différentes opérations : découvrir le réseau, scanner les ports, détecter les vulnérabilités, initier une connexion SSH ou générer un rapport.
 4. Les résultats seront affichés dans l'application et un rapport PDF sera généré dans le répertoire "Report"
 
@@ -65,3 +65,5 @@ Ce projet est sous licence MIT, sauf indication contraire pour les dépendances 
 ## ✍️ Auteur
 
 Développé par [Mohamed JEDDI M1 CYB B](https://github.com/mohaa404).
+
+Enjoy 🤓
