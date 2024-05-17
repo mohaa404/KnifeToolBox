@@ -20,7 +20,7 @@ Knife Tool Box est une application Kivy développée dans le cadre d'un projet d
 - paramiko
 
 ## 🛠️ Installation (EN ADMIN !!)
-
+PS : Ce projet est exécutable sous les plateforme Windows et Linux 
 1. Clonez le dépôt :
 
     ```
